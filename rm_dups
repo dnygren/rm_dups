@@ -3,9 +3,12 @@
 # rm_dups : Create separate script to safely remove duplicate files
 #
 # Original by Jarno Elonen, released in Public Domain
-# From http://elonen.iki.fi/code/misc-notes/remove-duplicate-files/
+# Original from http://elonen.iki.fi/code/misc-notes/remove-duplicate-files/
 # Various changes by Dan Nygren
 # Email: dan.nygren@gmail.com 
+#
+# BSD 0-clause license, "Zero Clause BSD", SPDX: 0BSD
+# Copyright (c) 2019, Daniel C. Nygren.
 #
 #   The following shell script finds duplicate (two or more identical) files
 # and outputs a new shell script file containing commented-out "rm" statements
@@ -54,7 +57,10 @@
 #
 # ERROR HANDLING    None
 #
-# WARNINGS          By default, gzip puts the date and filename into its
+# WARNINGS          1) If executed in a directory tree, rm_dups will output
+#                   the duplicate file(s), but not where the master resides
+#                   if it is elsewhere in the tree.
+#                   2) By default, gzip puts the date and filename into its
 #                   archive, so two identical files created at different times
 #                   will appear different if gzipped. Use gzip -n to turn off
 #                   this feature.
