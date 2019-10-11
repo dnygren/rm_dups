@@ -1,0 +1,5 @@
+rm_dups README                                          D. Nygren  11 Oct 2019
+--------------------------------------------------------------------------------
+
+    Read the comment header block in the source code of the rm_dups script file
+for detailed information on the operation of this program.

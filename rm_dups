@@ -1,0 +1,92 @@
+#!/bin/bash
+################################################################################
+# rm_dups : Create separate script to safely remove duplicate files
+#
+# Original by Jarno Elonen, released in Public Domain
+# From http://elonen.iki.fi/code/misc-notes/remove-duplicate-files/
+# Various changes by Dan Nygren
+# Email: dan.nygren@gmail.com 
+#
+#   The following shell script finds duplicate (two or more identical) files
+# and outputs a new shell script file containing commented-out "rm" statements
+# for deleting them.
+#   Edit this new shell script file to select which files to keep. This is
+# done because it isn't safe do it automatically.
+#
+# Code Explanation
+#
+#        - write output script header
+#        - set initial MD5 hash compare value to something that will never give
+#          a valid comparison
+#        - list the size of all files recursively under current directory
+#        - filter out unique file sizes (leaving only sizes that occur at
+#          least twice)
+#        - find the filenames for files whose size occurs on the list
+#        - calculate their MD5 sums
+#        - sort in manner such that original file is kept over a copy.
+#        - wrap file names in quotes and separate from hash with a pipe (IFS
+#          changed to "|") so the read command won't choke on file name spaces.
+#          spaces in file names don't cause read problems.
+#        - find duplicate sums and print only file names
+#        - write out commented-out delete commands
+#        - make the output script executable and "ls -l" it.
+#        - output instructions on the console.
+#
+# CALLING SEQUENCE  rm_dups
+#
+# EXAMPLES          $ ./rm_dups
+#                   $ vi remove-duplicates.sh
+#                   $ ./remove-duplicates.sh
+#
+# TARGET SYSTEM     Unix (Linux or Solaris)
+#
+# DEVELOPED ON      Solaris 10, Linux
+#
+# CALLS             find, uniq, xargs, md5sum, sort, sed, chmod, ls
+#
+# CALLED BY         N/A
+#
+# INPUTS            Directory with possible duplicate files.
+#
+# OUTPUTS           Writes to file $OUTF.
+#
+# RETURNS           Nothing
+#
+# ERROR HANDLING    None
+#
+# WARNINGS          By default, gzip puts the date and filename into its
+#                   archive, so two identical files created at different times
+#                   will appear different if gzipped. Use gzip -n to turn off
+#                   this feature.
+#                       To fix files already gzipped use something like:
+#                       ls *.gz | xargs gunzip
+#                       ls *.gtar | xargs gzip -n
+################################################################################
+
+OUTF=remove-duplicates.sh;
+
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^ Place code that may need modification above this point. ^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+IFS='|'
+previous_hash="The first hash comparison will fail on purpose.";
+echo "#! /bin/sh" > $OUTF;
+echo "# Uncomment a line if you wish to remove that file." > $OUTF;
+echo "# Then save and execute $OUTF on the command line." > $OUTF;
+/usr/bin/find "$@" -type f -printf "%s\n" | /usr/bin/sort -n | \
+    /usr/bin/uniq -d  |
+    /usr/bin/xargs -I@@ -n1 \
+    /usr/bin/find "$@" -type f -size @@c -exec /usr/bin/md5sum {} \;  | \
+    /usr/bin/sort -r  | /bin/sed "s/$/\"/" | /bin/sed "s/  [.]/\|\"./" | \
+while read hash filename; \
+do \
+    if [[ $hash == $previous_hash ]]; \
+    then printf "%s\n" $filename; else previous_hash=$hash; \
+    fi \
+done | \
+/usr/bin/sort | /bin/sed -r 's/(.+)/#rm \1/' >> $OUTF
+/bin/chmod a+x $OUTF
+/bin/ls -l $OUTF
+echo "Uncomment a line from the above file if you wish to remove that file."
+echo "Then save and execute $OUTF on the command line."
